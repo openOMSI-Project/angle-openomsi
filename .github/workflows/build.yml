@@ -50,6 +50,24 @@ jobs:
             echo "yes=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Chromium's build (build/vs_toolchain.py) wants exactly this Windows SDK, newer than
+      # the runner's: the official installer, checked against the hash winget publishes for it.
+      - name: Windows SDK 10.0.28000
+        if: steps.have.outputs.yes == 'false'
+        shell: pwsh
+        run: |
+          $url = "https://download.microsoft.com/download/06fc99ac-527e-451e-a536-8866695a2e7e/KIT_BUNDLE_WINDOWSSDK_MEDIACREATION/winsdksetup.exe"
+          $want = "02988EA51EAB2A2DB53E19735E51C97A6D221ADA74B9174FA0868870B9403BA0"
+          $exe = Join-Path $env:RUNNER_TEMP "winsdksetup.exe"
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          $have = (Get-FileHash $exe -Algorithm SHA256).Hash
+          if ($have -ne $want) { throw "winsdksetup.exe: SHA-256 $have, expected $want" }
+          $p = Start-Process -FilePath $exe -Wait -PassThru -ArgumentList @(
+            "/features", "OptionId.DesktopCPPx64", "OptionId.DesktopCPPx86", "OptionId.WindowsDesktopDebuggers",
+            "/quiet", "/norestart", "/log", (Join-Path $env:RUNNER_TEMP "winsdk.log"))
+          if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) { Get-Content (Join-Path $env:RUNNER_TEMP "winsdk.log") -Tail 50; throw "SDK setup exit $($p.ExitCode)" }
+          if (-not (Test-Path "C:\Program Files (x86)\Windows Kits\10\Include\10.0.28000.0\um\windows.h")) { throw "SDK 10.0.28000.0 headers missing" }
+
       - name: depot_tools
         if: steps.have.outputs.yes == 'false'
         shell: bash
