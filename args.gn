@@ -1,0 +1,14 @@
+# ANGLE for openOMSI: OpenGL ES 3.0 over Direct3D 11 only, x64, release, two DLLs.
+is_debug = false
+target_cpu = "x64"
+is_component_build = false
+symbol_level = 0
+angle_enable_d3d11 = true
+angle_enable_d3d9 = false
+angle_enable_gl = false
+angle_enable_vulkan = false
+angle_enable_null = false
+angle_enable_swiftshader = false
+angle_build_tests = false
+angle_has_frame_capture = false
+chrome_pgo_phase = 0
