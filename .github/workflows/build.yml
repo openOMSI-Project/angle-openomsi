@@ -61,12 +61,15 @@ jobs:
         if: steps.have.outputs.yes == 'false'
         shell: cmd
         run: |
-          call gclient --version
-          git clone https://chromium.googlesource.com/angle/angle "%RUNNER_TEMP%\angle" || exit /b 1
+          rem (depot_tools' git, python and gclient are .bat files: without `call` the first of
+          rem them would end this script, with success)
+          call gclient help >nul
+          call git clone https://chromium.googlesource.com/angle/angle "%RUNNER_TEMP%\angle" || exit /b 1
           cd /d "%RUNNER_TEMP%\angle"
-          git checkout ${{ steps.rev.outputs.sha }} || exit /b 1
-          python scripts\bootstrap.py || exit /b 1
+          call git checkout ${{ steps.rev.outputs.sha }} || exit /b 1
+          call python3 scripts\bootstrap.py || exit /b 1
           call gclient sync --no-history -j 8 || exit /b 1
+          if not exist buildtools\win\gn\gn.exe if not exist buildtools\win\gn.exe (echo gn is missing after gclient sync & exit /b 1)
 
       - name: Build
         if: steps.have.outputs.yes == 'false'
